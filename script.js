@@ -16,31 +16,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     gsap.ticker.lagSmoothing(0);
 
-    // Eigene Split-Funktion
-    function splitTextToChars(element) {
-        const text = element.textContent;
-        element.innerHTML = '';
-        
-        const chars = text.split('').map(char => {
-            // Wrapper für Overflow Masking
-            const wrapper = document.createElement('div');
-            wrapper.style.display = 'inline-block';
-            wrapper.style.overflow = 'hidden';
-            wrapper.style.verticalAlign = 'top';
-            
-            // Char Span
-            const charSpan = document.createElement('span');
-            charSpan.style.display = 'inline-block';
-            charSpan.style.willChange = 'transform';
-            charSpan.textContent = char === ' ' ? '\u00A0' : char;
-            
-            wrapper.appendChild(charSpan);
-            element.appendChild(wrapper);
-            
-            return charSpan;
+    // Scroll Indicator Animation - fade out on scroll
+    const scrollIndicator = document.querySelector('.scroll-indicator');
+    if (scrollIndicator) {
+        gsap.to(scrollIndicator, {
+            opacity: 0,
+            scrollTrigger: {
+                trigger: '.hero',
+                start: 'top top',
+                end: 'bottom top',
+                scrub: true
+            }
         });
-        
-        return chars;
     }
 
     // Your GSAP animation code here
@@ -48,26 +35,54 @@ document.addEventListener('DOMContentLoaded', () => {
         const img = element.querySelector('.work-item-img');
         const nameH1 = element.querySelector('.work-item-name h1');
 
-        const chars = splitTextToChars(nameH1);
-
+        // Manual text split that respects word boundaries
+        const originalText = nameH1.textContent;
+        const words = originalText.trim().split(/\s+/);
+        nameH1.innerHTML = '';
+        
+        const chars = [];
+        
+        words.forEach((word, wordIndex) => {
+            // Create word wrapper
+            const wordSpan = document.createElement('span');
+            wordSpan.style.display = 'inline-block';
+            wordSpan.style.whiteSpace = 'nowrap';
+            
+            // Split word into chars
+            word.split('').forEach((char) => {
+                const charSpan = document.createElement('span');
+                charSpan.className = 'char';
+                charSpan.style.display = 'inline-block';
+                charSpan.textContent = char;
+                wordSpan.appendChild(charSpan);
+                chars.push(charSpan);
+            });
+            
+            nameH1.appendChild(wordSpan);
+            
+            // Add space between words (not after last word)
+            if (wordIndex < words.length - 1) {
+                nameH1.appendChild(document.createTextNode(' '));
+            }
+        });
+        
+        // Set initial state
+        gsap.set(chars, { opacity: 0, y: 50 });
         
         // Text Animation - Chars beim Scrollen
-        gsap.fromTo(chars,
-            {       
-                yPercent: 100
-            },
-            {               
-                yPercent: 0,
-                ease: "power2.out",
-                stagger: 0.05,          
-                scrollTrigger: {
-                    trigger: element,
-                    start: "top 90%",   
-                    end: "bottom 55%",
-                    scrub: 1
-                }
+        gsap.to(chars, {
+            opacity: 1,
+            y: 0,
+            stagger: 0.03,
+            ease: "none",
+            scrollTrigger: {
+                trigger: nameH1,
+                start: "top 85%",
+                end: "top 40%",
+                scrub: 1,
+                markers: false
             }
-        );
+        });
 
 
         // Image Animation - Clip-Path beim Scrollen
